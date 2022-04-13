@@ -11,8 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.26.1",
-    "body-parser": "^1.19.2",
-    "http-proxy": "^1.18.1",
-    "koa": "^2.13.4"
+    "http-proxy": "~1.16.2",
+    "koa": "~2.5.0",
+    "koa-bodyparser": "^4.2.1"
   }
 }

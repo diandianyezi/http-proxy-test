@@ -1,77 +1,56 @@
 const httpProxy = require('http-proxy');
 const koa = require('koa');
-const bodyParse = require('body-parser');
 const PORT = 3000;
+const bodyParser = require('koa-bodyparser')
 
 const app = new koa()
 
-// logger
+const proxy = httpProxy.createProxyServer({ target: 'http://localhost:3000' }).listen(6000);
 
-// app.use(async (ctx, next) => {
-//     const start = Date.now();
-//     const ms = Date.now() - start;
-//     // console.info(ctx.req);
-//     // post请求方式
-//     let str = ''
-//     ctx.req.on('data', (data) => {
-//         str = data.toString().substr(0, 2048)
-//         console.info('data', typeof data, );
-//     })
-//     ctx.req.on('end', () => { 
-//         console.info('end-----', str);
-//     })
-//     // console.info(ctx.req)
-//     console.log(`${ctx.method} ${ctx.url} - ${ms}`);
-//     await next();
-//   });
-  
-  // response
-  
+app.use(bodyParser())
+app.use(async (ctx, next) => {
+    const start = Date.now();
+    console.info('start request-------------------');
+    // post请求方式
+    let reqData = Buffer.from('');
+    ctx.req.on('data', (data) => {
+        reqData = Buffer.concat([reqData, data])
+        console.info('data---str', typeof data, reqData.toString());
+    })
+    ctx.req.on('end', () => {
+        console.info('end-----', reqData.toString());
+    })
+    proxy.on('error', function (err, req, res) {
+        log.info('出错啦', JSON.stringify(err))
+    });
+    await next()
+    console.info(ctx.request.body);
+    const ms = Date.now() - start;
 
-const proxy = httpProxy.createProxyServer({target:'http://localhost:3000'}).listen(6000);
+
+    // proxy.on('proxyRes', function (proxyRes, req, res) {
+    //     let body = Buffer.from('')
+    //     proxyRes.on('data', data => {
+    //         body = Buffer.concat([body, data])
+    //     })
+    //     proxyRes.on('error', function (err, req, res) {
+    //         log.info('出错啦', JSON.stringify(err))
+    //       });
+    //     proxyRes.on('end', function () {
+    //         console.info('proxyRes---data', body.toString());
+    //         console.info('proxyRes---str', ctx.req.body);
+    //         console.info('proxyRes---str', ctx.request.query);
+    //     })
+    // })
+    // console.info(ctx.req)
+    console.log(`${ctx.method} ${ctx.url} - ${ms}`);
+})
 
 app.use(async (ctx, next) => {
-            const start = Date.now();
-            const ms = Date.now() - start;
-            // console.info(ctx.req);
-            // post请求方式
-            let str = ''
-            ctx.req.on('data', (data) => {
-                str = data.toString().substr(0, 2048)
-                console.info('data', typeof data, );
-            })
-            ctx.req.on('end', () => { 
-                console.info('end-----', str);
-            })
-            proxy.on('proxyReq', function(proxyReq, req,res) {
-                let body = Buffer('')
-                proxyReq.on('data1', data => {
-                    console.info('data1', data.toString());
-                    body = Buffer.concat([body, data])
-                })
-                proxyReq.on('end1', function () {
-                    console.info('proxyRes1---str', str );
-                })
-            })
-            // proxy.on('proxyRes', function(proxyRes, req,res) {
-            //     let body = Buffer('')
-            //     proxyRes.on('data', data => {
-            //         console.info('data', data.toString());
-            //         body = Buffer.concat([body, data])
-            //     })
-            //     proxyRes.on('end', function () {
-            //         console.info('proxyRes---str', str );
-            //     })
-            // })
-            // console.info(ctx.req)
-            await proxy.web(ctx.req, ctx.res)
-            console.log(`${ctx.method} ${ctx.url} - ${ms}`);
-            await next();
-        })
-
-  app.use(async ctx => {
+    // if (ctx.request.path === '/test') {
     ctx.body = 'Hello World';
-  });
+    // }
+});
 
 app.listen(PORT, () => {
     console.info(`listening on port ${PORT}`);
